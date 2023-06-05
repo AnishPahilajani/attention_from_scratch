@@ -1,5 +1,3 @@
-%%writefile README.md
-
 # Nano GPT
 
 I am attempting to re create Andrej Karpathy's Nano GPT from scratch. In this process I have learnt how to implement Self Attention and Multi Head Attention from scratch. 
