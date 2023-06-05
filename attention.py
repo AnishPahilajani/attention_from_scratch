@@ -119,10 +119,12 @@ class Block(nn.Module):
         head_size = n_embd // n_head
         self.sa = MultiHeadAttention(n_head, head_size)
         self.ffwd = FeedForward(n_embd)
+        self.ln1 = nn.LayerNorm(n_embd)
+        self.ln2 = nn.LayerNorm(n_embd)
         
     def forward(self, x):
-        x = x + self.sa(x) # x = x + self .. is residual connection
-        x = x + self.ffwd(x)
+        x = x + self.sa(self.ln1(x)) # x = x + self .. is residual connection
+        x = x + self.ffwd(self.ln2(x))
         return x
         
 
@@ -133,8 +135,6 @@ class BigramLanguageModel(nn.Module):
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd) # so each position from 0 to block_size - 1 will also get its own embedding vector
-        # self.sa_heads = MultiHeadAttention(4, n_embd//4) # i.e 4 heads of 8-dimentional self-attention
-        # self.ffwd = FeedForward(n_embd)
         self.blocks = nn.Sequential(
             Block(n_embd, n_head=4),
             Block(n_embd, n_head=4),
@@ -153,8 +153,6 @@ class BigramLanguageModel(nn.Module):
         # so 0th row will represent the vector for 0th position
         x = tok_emb + pos_emb # (B, T, C)
         x = self.blocks(x) # (B, T, C)
-        # x = self.sa_heads(x) # apply one head of self-attention. (B, T, C)
-        # x = self.ffwd(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, C=vocab_size)
 
         if targets is None:
