@@ -3,15 +3,15 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 # hyperparameters
-batch_size = 64 # how many independent sequences will we process in parallel?
-block_size = 256 # what is the maximum context length for predictions?
-max_iters = 5000
+batch_size = 32#64 # how many independent sequences will we process in parallel?
+block_size = 8#256 # what is the maximum context length for predictions?
+max_iters = 500#5000
 eval_interval = 500
-learning_rate = 3e-4
+learning_rate = 1e-3#3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 200
-n_embd = 384
-n_head = 6
+n_embd = 32#384
+n_head = 4#6
 n_layer = 6
 dropout = 0.2
 # ------------
@@ -70,7 +70,7 @@ class Head(nn.Module):
         self.key = nn.Linear(n_embd, head_size, bias=False)
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
-        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size))) # create lower triangular matrix
         
         self.dropout = nn.Dropout(dropout)
     
@@ -103,7 +103,7 @@ class MultiHeadAttention(nn.Module):
         out = self.dropout(self.proj(out))
         return out
 
-class FeedForward(nn.Module):
+class FeedForward(nn.Module): # per token level, every token does this independently, its allowing tokens to think on data provided by self attention
     """ a simple linear layer followed by a non-linearity"""
     
     def __init__(self, n_embd):
