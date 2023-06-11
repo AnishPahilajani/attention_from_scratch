@@ -71,7 +71,6 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size))) # create lower triangular matrix
-        
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, x):
@@ -102,6 +101,34 @@ class MultiHeadAttention(nn.Module):
         out = torch.cat([h(x) for h in self.heads], dim=-1) # h(x) call forward function is Head class
         out = self.dropout(self.proj(out))
         return out
+    
+class Head_and_MultiHeadAttention(nn.Module):
+    """EX1: Combine the `Head` and `MultiHeadAttention` """
+    def __init__(self, head_size, num_heads):
+        super().__init__()
+        self.num_head = num_heads
+        self.key = nn.Linear(n_embd, head_size, bias=False)
+        self.query = nn.Linear(n_embd, head_size, bias=False)
+        self.value = nn.Linear(n_embd, head_size, bias=False)
+        self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size))) # create lower triangular matrix
+        self.dropout = nn.Dropout(dropout)
+        
+    def create_head(self, x):
+        B,T,C = x.shape
+        k = self.key(x) # B, T, C
+        q = self.query(x) # B, T, C
+        # compute attention scores = ("affinities")
+        wei = q @ k.transpose(-2, -1) * C**-0.5 # (B, T, C) @ (B, C, T) -> (B, T, T)
+        wei = wei.masked_fill(self.tril[:T, :T]==0, float('-inf')) # (B, T, T)
+        wei = F.softmax(wei, dim=-1) # (B, T, T)
+        wei = self.dropout(wei)
+        # perform the weighted aggregation of the values
+        v = self.value(x) # (B, T, C)
+        out = wei @ v
+        return out
+    
+    def create_multi_head(self, x):
+        heads = nn.ModuleList([__init__(head_size) for _ in range(self.num_heads)])
 
 class FeedForward(nn.Module): # per token level, every token does this independently, its allowing tokens to think on data provided by self attention
     """ a simple linear layer followed by a non-linearity"""
