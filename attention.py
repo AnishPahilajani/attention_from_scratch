@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import os
 
 # hyperparameters
 batch_size = 32#64 # how many independent sequences will we process in parallel?
@@ -192,6 +193,16 @@ m = model.to(device)
 
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+checkpoint_path = 'checkpoint.pth'
+
+# Check if a checkpoint file exists
+if os.path.exists(checkpoint_path):
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    start_iter = checkpoint['iter']
+    print(f"Resuming training from iteration {start_iter}")
+    
 
 for iter in range(max_iters):
 
@@ -199,6 +210,12 @@ for iter in range(max_iters):
     if iter % eval_interval == 0:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'iter': iter
+        }
+        torch.save(checkpoint, checkpoint_path)
 
     # sample a batch of data
     xb, yb = get_batch('train')
