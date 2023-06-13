@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 import os
+import matplotlib.pyplot as plt
 
 # hyperparameters
 batch_size = 64 # how many independent sequences will we process in parallel?
@@ -10,6 +11,7 @@ max_iters = 5000
 eval_interval = 500
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f"The code is running on {device} : GPU={torch.cuda.get_device_name(0)}")
 eval_iters = 200
 n_embd = 384
 n_head = 6
@@ -203,6 +205,9 @@ if os.path.exists(checkpoint_path):
     start_iter = checkpoint['iter']
     print(f"Resuming training from iteration {start_iter}")
     
+# Define empty lists to store the loss values
+train_losses = []
+val_losses = []
 
 for iter in range(max_iters):
 
@@ -210,6 +215,12 @@ for iter in range(max_iters):
     if iter % eval_interval == 0:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        
+        # Append the losses to the respective lists
+        train_losses.append(losses['train'])
+        val_losses.append(losses['val'])
+        
+        
         checkpoint = {
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -229,3 +240,13 @@ for iter in range(max_iters):
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
+
+
+
+# Plot the train and validation loss
+plt.plot(range(0, max_iters, eval_interval), train_losses, label='Train Loss')
+plt.plot(range(0, max_iters, eval_interval), val_losses, label='Validation Loss')
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
