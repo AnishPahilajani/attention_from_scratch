@@ -54,6 +54,7 @@ No sbanish appetition;
 
 # FYI: I dont really understand shakespeare english, so I used chatGPT to translate. here is the translation:
 
+```
 Your mistaken friends made excuses
 To drown their own soldiers, but I believe
 They planned to divide my territory,
@@ -70,3 +71,4 @@ Nurse:
 My lady, these lords
 You call me a slap in his face, scorned and
 Not banished by desire;
+```
