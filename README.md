@@ -72,3 +72,4 @@ My lady, these lords
 You call me a slap in his face, scorned and
 Not banished by desire;
 ```
+![image](https://github.com/AnishPahilajani/attention_from_scratch/assets/56148870/d607ab55-b2f2-4b78-bc24-8d407a202a46)
