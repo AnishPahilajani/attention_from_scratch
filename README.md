@@ -17,7 +17,7 @@ conda activate nano_gpt
 ```
 
 
-## Here is some text that is generated from my model
+## Here is some shakespeare text that is generated from my model
 
 ```
 The code is running on cuda : GPU=NVIDIA GeForce RTX 3090
@@ -51,3 +51,22 @@ You call me a clap of his ears cript and
 No sbanish appetition;
 
 ```
+
+# FYI: I dont really understand shakespeare english, so I used chatGPT to translate. here is the translation:
+
+Your mistaken friends made excuses
+To drown their own soldiers, but I believe
+They planned to divide my territory,
+Which these ladies from the towns despise,
+And their hatred won't diminish easily.
+But I must admit it's well-justified;
+Or her deadly desire is always so prepared;
+She pleads like steel against these guilty ones!
+It's a hostile act, an offer to the enemy,
+You both betray Bolphy Henry and abandon,
+Disgracing your victory.
+
+Nurse:
+My lady, these lords
+You call me a slap in his face, scorned and
+Not banished by desire;
