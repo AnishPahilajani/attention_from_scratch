@@ -104,31 +104,33 @@ class MultiHeadAttention(nn.Module):
     
 class Head_and_MultiHeadAttention(nn.Module):
     """EX1: Combine the `Head` and `MultiHeadAttention` """
-    def __init__(self, head_size, num_heads):
+    def __init__(self, num_heads):
         super().__init__()
+        # key, query, value projections for all heads, but in a batch
+        self.c_attn = nn.Linear(n_embd, 3 * n_embd, bias=False)
+        self.proj = nn.Linear(n_embd, n_embd)
         self.num_head = num_heads
-        self.key = nn.Linear(n_embd, head_size, bias=False)
-        self.query = nn.Linear(n_embd, head_size, bias=False)
-        self.value = nn.Linear(n_embd, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size))) # create lower triangular matrix
         self.dropout = nn.Dropout(dropout)
         
-    def create_head(self, x):
+    def forward(self, x):
         B,T,C = x.shape
-        k = self.key(x) # B, T, C
-        q = self.query(x) # B, T, C
+        q, k, v = self.c_attn(x).split(n_embd, dim=2) # (B,T,C*3) to 3 of  (B,T,C)  
+        # nh = number of heads
+        # hs = heaqd size
+        q = q.view(B, T, self.num_head, C // self.num_head).transpose(1,2) #  (B,T, nh, hs)
+        k = k.view(B, T, self.num_head, C // self.num_head).transpose(1,2) #  (B,T, nh, hs)
+        v = v.view(B, T, self.num_head, C // self.num_head).transpose(1,2) #  (B,T, nh, hs)
         # compute attention scores = ("affinities")
-        wei = q @ k.transpose(-2, -1) * C**-0.5 # (B, T, C) @ (B, C, T) -> (B, T, T)
-        wei = wei.masked_fill(self.tril[:T, :T]==0, float('-inf')) # (B, T, T)
+        wei = q @ k.transpose(-2, -1) * C**-0.5 #  # (B, T, nh, hs) @ (B, T, hs, nh) -> (B, T, nh, nh)
+        wei = wei.masked_fill(self.tril[:T, :T]==0, float('-inf')) # (B, nh, nh)
         wei = F.softmax(wei, dim=-1) # (B, T, T)
         wei = self.dropout(wei)
         # perform the weighted aggregation of the values
-        v = self.value(x) # (B, T, C)
         out = wei @ v
+        out = out.transpose(1, 2).contiguous().view(B, T, C)
+        out = self.dropout(self.proj(out))
         return out
-    
-    def create_multi_head(self, x):
-        heads = nn.ModuleList([__init__(head_size) for _ in range(self.num_heads)])
 
 class FeedForward(nn.Module): # per token level, every token does this independently, its allowing tokens to think on data provided by self attention
     """ a simple linear layer followed by a non-linearity"""
@@ -151,11 +153,10 @@ class Block(nn.Module):
     def __init__(self, n_embed, n_head):
         # n_embd: embedding dimension, n_head: the number of heads we'd like
         super().__init__()
-        head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
-        self.ffwd = FeedForward(n_embd)
-        self.ln1 = nn.LayerNorm(n_embd)
-        self.ln2 = nn.LayerNorm(n_embd)
+        self.sa = Head_and_MultiHeadAttention(n_head)#MultiHeadAttention(n_head)
+        self.ffwd = FeedForward(n_embed)
+        self.ln1 = nn.LayerNorm(n_embed)
+        self.ln2 = nn.LayerNorm(n_embed)
         
     def forward(self, x):
         x = x + self.sa(self.ln1(x)) # x = x + self .. is residual connection
